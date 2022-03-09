@@ -20,6 +20,7 @@ namespace NodeVerificationBot
         private readonly Random _random;
 
         private readonly List<ulong> _rolesToGrant;
+        private readonly string _neighborhoodToValidate;
 
         public Commands(IUplandApiRepository uplandApiRepository, IRegisterRepository registerRepository, IConfiguration configuration)
         {
@@ -30,6 +31,7 @@ namespace NodeVerificationBot
             _random = new Random();
 
             _rolesToGrant = this._configuration["AppSettings:RolesToGrant"].Split(",").Select(s => ulong.Parse(s)).ToList();
+            _neighborhoodToValidate = this._configuration["AppSettings:NeighborhoodToValidate"].ToUpper();
         }
 
         [Command("Ping")]
@@ -58,30 +60,26 @@ namespace NodeVerificationBot
                 return;
             }
 
+            properties = properties.Where(p => p.Neighborhood.ToUpper() == _neighborhoodToValidate).ToList();
+
+            if (properties.Count == 0)
+            {
+                await ReplyAsync(string.Format("{0} has no properties in {1}", uplandUserName, _neighborhoodToValidate));
+                return;
+            }
+
             UplandProperty verifyProp = null;
-            properties = properties.Where(p => p.Status != "For Sale").ToList();
             long verifyProperty = -1;
             int verifyPrice = _random.Next(80000000, 90000000);
 
-            int loopCount = 0;
-            while (loopCount < 10)
+            try
             {
-                try
-                {
-                    verifyProp = await _uplandApiRepository.GetPropertyById(properties[_random.Next(0, properties.Count)].Prop_Id);
-                    if (!verifyProp.labels.fsa_allow && verifyProp.building == null)
-                    {
-                        verifyProperty = verifyProp.Prop_Id;
-                        loopCount = 100;
-                    }
-
-                    loopCount++;
-                }
-                catch(Exception ex)
-                {
-                    await ReplyAsync(string.Format("Error: {0}", ex.Message));
-                    return;
-                }
+                verifyProp = await _uplandApiRepository.GetPropertyById(properties[_random.Next(0, properties.Count)].Prop_Id);
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync(string.Format("Error: {0}", ex.Message));
+                return;
             }
 
             // The registered user is null
@@ -113,7 +111,7 @@ namespace NodeVerificationBot
                 {
                     await ReplyAsync(string.Format("Error: {0}", ex.Message));
                 }
-  
+
                 return;
             }
 
