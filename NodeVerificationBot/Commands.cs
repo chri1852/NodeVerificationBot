@@ -20,7 +20,7 @@ namespace NodeVerificationBot
         private readonly Random _random;
 
         private readonly List<ulong> _rolesToGrant;
-        private readonly string _neighborhoodToValidate;
+        private readonly List<long> _validPropertyIds;
 
         public Commands(IUplandApiRepository uplandApiRepository, IRegisterRepository registerRepository, IConfiguration configuration)
         {
@@ -31,7 +31,7 @@ namespace NodeVerificationBot
             _random = new Random();
 
             _rolesToGrant = this._configuration["AppSettings:RolesToGrant"].Split(",").Select(s => ulong.Parse(s)).ToList();
-            _neighborhoodToValidate = this._configuration["AppSettings:NeighborhoodToValidate"].ToUpper();
+            _validPropertyIds = this._configuration["AppSettings:ValidPropIds"].Split(",").Select(s => long.Parse(s)).ToList();
         }
 
         [Command("Ping")]
@@ -60,11 +60,11 @@ namespace NodeVerificationBot
                 return;
             }
 
-            properties = properties.Where(p => p.Neighborhood.ToUpper() == _neighborhoodToValidate).ToList();
+            properties = properties.Where(p => _validPropertyIds.Contains(p.Prop_Id)).ToList();
 
             if (properties.Count == 0)
             {
-                await ReplyAsync(string.Format("{0} has no properties in {1}", uplandUserName, _neighborhoodToValidate));
+                await ReplyAsync(string.Format("{0} has no valid properties.", uplandUserName));
                 return;
             }
 
