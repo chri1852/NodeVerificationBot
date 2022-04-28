@@ -69,7 +69,6 @@ namespace NodeVerificationBot
             }
 
             UplandProperty verifyProp = null;
-            long verifyProperty = -1;
             int verifyPrice = _random.Next(80000000, 90000000);
 
             try
@@ -86,7 +85,7 @@ namespace NodeVerificationBot
             RegisterData newUser = new RegisterData();
             newUser.DiscordId = Context.User.Id;
             newUser.Price = verifyPrice;
-            newUser.PropId = verifyProperty;
+            newUser.PropId = verifyProp.Prop_Id;
             newUser.Address = string.Format("{0}, {1}", verifyProp.Full_Address, verifyProp.City.name);
             newUser.UplandUsername = uplandUserName;
 
